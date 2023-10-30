@@ -13,6 +13,8 @@ import {
 } from "solid-start";
 import "./root.css";
 
+import { SocketProvider } from "./contexts/useSocketContext";
+
 export default function Root() {
   return (
     <Html lang="en">
@@ -24,9 +26,11 @@ export default function Root() {
       <Body>
         <Suspense>
           <ErrorBoundary>
-            <Routes>
-              <FileRoutes />
-            </Routes>
+            <SocketProvider>
+              <Routes>
+                <FileRoutes />
+              </Routes>
+            </SocketProvider>
           </ErrorBoundary>
         </Suspense>
         <Scripts />
