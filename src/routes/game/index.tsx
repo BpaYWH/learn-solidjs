@@ -13,17 +13,23 @@ const playerMap = {
 
 export default function Home() {
   const [boardState, setBoardState] = createSignal<number[][]>(new Array(15).fill(0).map(() => new Array(15).fill(0)));
-  const { socket, msg, roomId, playerId, gameState } = useSocketContext();
+  const { socket, msg, roomId, playerId, isRoomFull, isGameStarted, gameState } = useSocketContext();
 
-  const updateBoard = (x: number, y: number) => { 
-    const newBoardState = [...boardState()];
-    try {
-      socket()?.send("Move", roomId(), { Row: x, Col: y})
-      newBoardState[x][y] = playerId() === gameState.player1Id ? 1 : 2;
-      setBoardState(newBoardState);
-    } catch (e) {
+  const updateBoard = async (x: number, y: number) => { 
+   //  const newBoardState = [...boardState()];
+    const move = { PlayerId: playerId(), Row: x, Col: y, TimeStamp: new Date() };
+    console.log(move);
+   //  try {
+      await socket()?.send("Move", roomId(), move);
+      // newBoardState[x][y] = playerId() === gameState.player1Id ? 1 : 2;
+      // setBoardState(newBoardState);
+   //  } catch (e) {
 
-    }
+   //  }
+  }
+
+  const startGame = async() => {
+    socket()?.send("StartGame", roomId());
   }
 
    const disconnect = async () => {
@@ -39,10 +45,21 @@ export default function Home() {
          <p>Your room id: {roomId()}</p>
          <p>message: {msg()}</p>
          {
-            playerId() === gameState.currentPlayerId ?
+            isGameStarted() ?
+            (playerId() === gameState.currentPlayerId ?
             <p>Your turn</p>
             :
-            <p>Opponent's turn</p>
+            <p>Opponent's turn</p>)
+
+            :
+
+            (isRoomFull() ?
+            (playerId() === roomId() ?
+            <Button onClick={startGame}>Start</Button>
+            :
+            <p>Waiting for the host to start the game</p>)
+            :
+            <p>Waiting for opponent</p>)
          }
       </div>
       

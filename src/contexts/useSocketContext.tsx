@@ -20,7 +20,18 @@ interface GameState {
    currentPlayerId: string;
    isFinished: boolean;
    moves: GameMove[];
-   // board: number[][];
+   board: number[][];
+}
+
+interface  GameStateObj {
+   CurrentPlayerId: string;
+   GameId: string;
+   IsFinished: boolean;
+   Moves: [];
+   Player1Id: string;
+   Player2Id: string;
+   WinnerId: string;
+   Board: number[][];
 }
 
 type SocketStore = {
@@ -40,7 +51,7 @@ const defaultGameState: GameState = {
    currentPlayerId: "null",
    isFinished: false,
    moves: [],
-   // board: new Array(15).fill(0).map(() => new Array(15).fill(0))
+   board: new Array(15).fill(0).map(() => new Array(15).fill(0))
 } 
 const defaultStore: SocketStore = {
    socket: () => undefined,
@@ -64,6 +75,21 @@ export function SocketProvider(props: any) {
    const [gameState, setGameState] = createStore<GameState>(defaultGameState);
 
    const webSocket = { socket, msg, roomId, playerId, isRoomFull, isGameStarted, gameState };
+
+   const gameStateMapper = (gameStateJsonString: string) => {
+      const gameStateObj: GameStateObj = JSON.parse(gameStateJsonString);
+      
+      let newGameState = {...gameState};
+      newGameState.gameId = gameStateObj.GameId;
+      newGameState.player1Id = gameStateObj.Player1Id;
+      newGameState.player2Id = gameStateObj.Player2Id;
+      newGameState.currentPlayerId = gameStateObj.CurrentPlayerId;
+      newGameState.isFinished = gameStateObj.IsFinished;
+      newGameState.moves = gameStateObj.Moves;
+      newGameState.board = gameStateObj.Board;
+
+      setGameState(newGameState);
+   }
 
    onMount(() => {
       const ws = new signalR.HubConnectionBuilder()
@@ -97,12 +123,13 @@ export function SocketProvider(props: any) {
          setMsg("Player " + playerId + " joined");
       });
 
-      ws.on("GameStarted", (gameState: GameState) => {
+      ws.on("GameStarted", (gameStateJson: string) => {
          setIsGameStarted(true);
-         setGameState(gameState);
+         gameStateMapper(gameStateJson);
          setMsg("Game started");
       });
       ws.on("GameNotStarted", (message: string) => {
+         setIsRoomFull(false);
          setMsg(message);
       });
       
@@ -113,8 +140,9 @@ export function SocketProvider(props: any) {
          setMsg(message);
       });
 
-      ws.on("GameUpdated", (gameState: GameState) => {
-         setGameState(gameState);
+      ws.on("GameUpdated", (gameStateJson: string) => {
+         console.log("game updated")
+         gameStateMapper(gameStateJson);
       });
 
       ws.on("RoomLeft", (playerId: string) => {
