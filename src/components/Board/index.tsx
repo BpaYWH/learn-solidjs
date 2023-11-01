@@ -2,6 +2,7 @@ import { For } from "solid-js";
 interface Props {
    boardState: number[][] // 0: " ", 1: "●", 2: "○"
    updateBoard: (x: number, y: number) => void
+   isYourTurn: boolean
    playerMap: {
       0: string,
       1: string,
@@ -27,7 +28,11 @@ export default function Board(props: Props) {
                      <For each={row}>
                         {
                            (_, colIndex) => (
-                                 <button class={`flex justify-center items-center border w-[40px] aspect-square hover:bg-slate-200 hover:bg-opacity-50 ${props.boardState?.[rowIndex()]?.[colIndex()] !== 0 && "cursor-not-allowed"}`} onClick={() => handleGridClick(rowIndex(), colIndex())}>
+                                 <button 
+                                 class={`flex justify-center items-center border w-[40px] aspect-square hover:bg-slate-200 hover:bg-opacity-50 ${props.boardState?.[rowIndex()]?.[colIndex()] !== 0 && "cursor-not-allowed"}`} 
+                                 onClick={() => handleGridClick(rowIndex(), colIndex())}
+                                 disabled={!props.isYourTurn}
+                                 >
                                     {props.playerMap[props.boardState?.[rowIndex()]?.[colIndex()] as 0 | 1 | 2]}
                                  </button>
                               )

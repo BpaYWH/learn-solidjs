@@ -5,12 +5,12 @@ import { createStore } from "solid-js/store";
 import * as signalR from "@microsoft/signalr";
 
 interface GameMove {
-   id: string;
-   gameId: string;
-   playerId: string;
-   row: number;
-   col: number;
-   timestamp: Date;
+   Id: string;
+   GameId: string;
+   PlayerId: string;
+   Row: number;
+   Col: number;
+   Timestamp: Date;
 }
 
 interface GameState {
@@ -28,6 +28,8 @@ type SocketStore = {
     msg: Accessor<string>;
     roomId: Accessor<string>;
     playerId: Accessor<string>;
+    isRoomFull: Accessor<boolean>;
+    isGameStarted: Accessor<boolean>;
     gameState: GameState;
 };
 
@@ -35,7 +37,7 @@ const defaultGameState: GameState = {
    gameId: "",
    player1Id: "",
    player2Id: "",
-   currentPlayerId: "",
+   currentPlayerId: "null",
    isFinished: false,
    moves: [],
    // board: new Array(15).fill(0).map(() => new Array(15).fill(0))
@@ -45,6 +47,8 @@ const defaultStore: SocketStore = {
    msg: () => "",
    roomId: () => "",
    playerId: () => "",
+   isRoomFull: () => false,
+   isGameStarted: () => false,
    gameState: defaultGameState
 };
 const SocketContext = createContext<SocketStore>(defaultStore);
@@ -55,9 +59,11 @@ export function SocketProvider(props: any) {
    const [msg, setMsg] = createSignal<string>("");
    const [roomId, setRoomId] = createSignal<string>("");
    const [playerId, setPlayerId] = createSignal<string>("");
+   const [isRoomFull, setIsRoomFull] = createSignal<boolean>(false);
+   const [isGameStarted, setIsGameStarted] = createSignal<boolean>(false);
    const [gameState, setGameState] = createStore<GameState>(defaultGameState);
 
-   const webSocket = { socket, msg, roomId, playerId, gameState };
+   const webSocket = { socket, msg, roomId, playerId, isRoomFull, isGameStarted, gameState };
 
    onMount(() => {
       const ws = new signalR.HubConnectionBuilder()
@@ -68,28 +74,33 @@ export function SocketProvider(props: any) {
       .build();
       setSocket(ws);
       
-      ws.on("RoomCreated", (roomId: string) => { // +playerId
+      ws.on("RoomCreated", (roomId: string, playerId: string) => {
          setRoomId(roomId);
+         setPlayerId(playerId);
          setMsg("Created room with id: " + roomId);
       });
       ws.on("RoomNotCreated", () => {
          setMsg("Failed to create room");
       });
 
-      ws.on("RoomJoined", (roomId: string) => { // +playerId
+      ws.on("RoomJoined", (roomId: string, playerId: string) => {
          setRoomId(roomId);
+         setPlayerId(playerId);
          setMsg("Joined room");
       });
       ws.on("RoomNotFound", () => {
          setMsg("Failed to join room");
       });
 
-      ws.on("PlayerConnected", (playerId: string) => {
+      ws.on("PlayerConnected", (playerId: string, isRoomFull: boolean) => {
+         setIsRoomFull(isRoomFull);
          setMsg("Player " + playerId + " joined");
       });
 
       ws.on("GameStarted", (gameState: GameState) => {
+         setIsGameStarted(true);
          setGameState(gameState);
+         setMsg("Game started");
       });
       ws.on("GameNotStarted", (message: string) => {
          setMsg(message);
@@ -107,6 +118,11 @@ export function SocketProvider(props: any) {
       });
 
       ws.on("RoomLeft", (playerId: string) => {
+         setIsRoomFull(false);
+         setIsGameStarted(false);
+         setGameState(defaultGameState);
+         setRoomId("");
+         setPlayerId("");
          setMsg(`Player ${playerId} left`);
       });
 

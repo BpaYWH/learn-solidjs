@@ -17,8 +17,13 @@ export default function Home() {
 
   const updateBoard = (x: number, y: number) => { 
     const newBoardState = [...boardState()];
-    newBoardState[x][y] = playerId() === gameState.player1Id ? 1 : 2;
-    setBoardState(newBoardState);
+    try {
+      socket()?.send("Move", roomId(), { Row: x, Col: y})
+      newBoardState[x][y] = playerId() === gameState.player1Id ? 1 : 2;
+      setBoardState(newBoardState);
+    } catch (e) {
+
+    }
   }
 
    const disconnect = async () => {
@@ -42,7 +47,7 @@ export default function Home() {
       </div>
       
       <div id="GameDiv" class="m-8">
-         <Board updateBoard={updateBoard} boardState={boardState()} playerMap={playerMap} />
+         <Board updateBoard={updateBoard} boardState={boardState()} playerMap={playerMap} isYourTurn={playerId() === gameState.currentPlayerId} />
       </div>
 
       <Button onClick={disconnect}>
