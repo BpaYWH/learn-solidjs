@@ -2,7 +2,7 @@ import { For } from "solid-js";
 interface Props {
    boardState: number[][] // 0: " ", 1: "●", 2: "○"
    updateBoard: (x: number, y: number) => void
-   isYourTurn: boolean
+   isClickable: boolean
    playerMap: {
       0: string,
       1: string,
@@ -20,7 +20,7 @@ export default function Board(props: Props) {
    }
 
    return (
-      <div class="w-fit bg-orange-50 mx-auto">
+      <div class={`w-fit ${props.isClickable ? "bg-orange-50" : "bg-slate-200"} mx-auto`}>
          <For each={baseBoard}>
             {
                (row, rowIndex) => (
@@ -29,9 +29,9 @@ export default function Board(props: Props) {
                         {
                            (_, colIndex) => (
                                  <button 
-                                 class={`flex justify-center items-center border w-[40px] aspect-square hover:bg-slate-200 hover:bg-opacity-50 ${props.boardState?.[rowIndex()]?.[colIndex()] !== 0 && "cursor-not-allowed"}`} 
+                                 class={`flex justify-center items-center border border-slate-400 w-[40px] aspect-square hover:bg-slate-200 hover:bg-opacity-50 ${props.boardState?.[rowIndex()]?.[colIndex()] !== 0 && "cursor-not-allowed"}`} 
                                  onClick={() => handleGridClick(rowIndex(), colIndex())}
-                                 disabled={!props.isYourTurn}
+                                 disabled={!props.isClickable}
                                  >
                                     {props.playerMap[props.boardState?.[rowIndex()]?.[colIndex()] as 0 | 1 | 2]}
                                  </button>

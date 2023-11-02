@@ -19,6 +19,7 @@ interface GameState {
    player2Id: string;
    currentPlayerId: string;
    isFinished: boolean;
+   winnerId: string;
    moves: GameMove[];
    board: number[][];
 }
@@ -51,6 +52,7 @@ const defaultGameState: GameState = {
    currentPlayerId: "null",
    isFinished: false,
    moves: [],
+   winnerId: "",
    board: new Array(15).fill(0).map(() => new Array(15).fill(0))
 } 
 const defaultStore: SocketStore = {
@@ -86,6 +88,7 @@ export function SocketProvider(props: any) {
       newGameState.currentPlayerId = gameStateObj.CurrentPlayerId;
       newGameState.isFinished = gameStateObj.IsFinished;
       newGameState.moves = gameStateObj.Moves;
+      newGameState.winnerId = gameStateObj.WinnerId;
       newGameState.board = gameStateObj.Board;
 
       setGameState(newGameState);
@@ -103,7 +106,7 @@ export function SocketProvider(props: any) {
       ws.on("RoomCreated", (roomId: string, playerId: string) => {
          setRoomId(roomId);
          setPlayerId(playerId);
-         setMsg("Created room with id: " + roomId);
+         setMsg("Waitign for opponent");
       });
       ws.on("RoomNotCreated", () => {
          setMsg("Failed to create room");
@@ -120,13 +123,14 @@ export function SocketProvider(props: any) {
 
       ws.on("PlayerConnected", (playerId: string, isRoomFull: boolean) => {
          setIsRoomFull(isRoomFull);
-         setMsg("Player " + playerId + " joined");
+         setMsg("Opponent joined");
       });
 
       ws.on("GameStarted", (gameStateJson: string) => {
          setIsGameStarted(true);
          gameStateMapper(gameStateJson);
-         setMsg("Game started");
+         const message = gameState.currentPlayerId === playerId() ? "Your turn" : "Opponent's turn";
+         setMsg(message);
       });
       ws.on("GameNotStarted", (message: string) => {
          setIsRoomFull(false);
@@ -141,8 +145,12 @@ export function SocketProvider(props: any) {
       });
 
       ws.on("GameUpdated", (gameStateJson: string) => {
-         console.log("game updated")
          gameStateMapper(gameStateJson);
+      });
+      ws.on("GameSet", () => {
+         setIsGameStarted(false);
+         const message = gameState.winnerId === playerId() ? "You won" : "You lost";
+         setMsg(message);
       });
 
       ws.on("RoomLeft", (playerId: string) => {
