@@ -1,13 +1,16 @@
 import { Title } from "solid-start";
-
 import { useSocketContext } from "~/contexts/useSocketContext";
+import { useNavigate } from "solid-start";
 import Board from "~/components/Board";
 import Button from "~/components/Button";
 
 import { playerMap } from "~/utils/constants";
+import { createEffect } from "solid-js";
 
 export default function Home() {
-  const { socket, msg, roomId, playerId, isRoomFull, isGameStarted, gameState } = useSocketContext();
+   const navigate = useNavigate();
+
+  const { socket, msg, roomId, playerId, isConnected, isRoomFull, isGameStarted, gameState } = useSocketContext();
 
   const updateBoard = async (x: number, y: number) => { 
     const move = { PlayerId: playerId(), Row: x, Col: y, TimeStamp: new Date() };
@@ -18,13 +21,25 @@ export default function Home() {
     socket()?.send("StartGame", roomId());
   }
 
-   const disconnect = async () => {
+  const leaveServer = async () => {
       await socket()?.send("LeaveGame", roomId());
+  }
+
+   const disconnect = () => {
+      leaveServer().catch(e => console.log(e.message));
+      navigate("/home");
    }
+   
 
    const copyRoomId = () => {
       navigator.clipboard.writeText(roomId());
    }
+
+   createEffect(() => {
+      if(!isConnected()) {
+         navigate("/home");
+      } 
+   });
 
   return (
     <main>

@@ -6,7 +6,7 @@ import { useSocketContext } from "~/contexts/useSocketContext";
 import Button from "~/components/Button";
 
 export default function Home() {
-  const { socket, msg, roomId } = useSocketContext();
+  const { socket, roomId } = useSocketContext();
   const [joinRoomId, setJoinRoomId] = createSignal<string>("");
   const navigate = useNavigate();
 
@@ -19,10 +19,6 @@ export default function Home() {
    await socket()?.start();
    await socket()?.send("JoinGame", joinRoomId());
    setJoinRoomId("");
-  }
-
-  const disconnect = async () => {
-   await socket()?.stop();
   }
 
   createEffect(() => {
@@ -39,7 +35,6 @@ export default function Home() {
         <Button onClick={createRoom}>
           Create Room
         </Button>
-        <p>Debug message: {msg()}</p>
 
          <input 
          type="text" 
@@ -53,10 +48,6 @@ export default function Home() {
          <Button onClick={joinRoom}>
             Join Room
          </Button>
-
-        <Button onClick={disconnect}>
-         Stop Connection
-        </Button>
       </div>
     </main>
   );
