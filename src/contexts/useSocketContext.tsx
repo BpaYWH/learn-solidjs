@@ -138,6 +138,7 @@ export function SocketProvider(props: any) {
       });
 
       ws.on("GameStarted", (gameStateJson: string) => {
+         resetGameState();
          setIsGameStarted(true);
          gameStateMapper(gameStateJson);
          const message = gameState.currentPlayerId === playerId() ? "Your turn" : "Opponent's turn";
@@ -148,13 +149,6 @@ export function SocketProvider(props: any) {
          setMsg(message);
       });
       
-      ws.on("InvalidGame", (message: string) => {
-         setMsg(message);
-      });
-      ws.on("InvalidMove", (message: string) => {
-         setMsg(message);
-      });
-
       ws.on("GameUpdated", (gameStateJson: string) => {
          gameStateMapper(gameStateJson);
       });
@@ -169,7 +163,6 @@ export function SocketProvider(props: any) {
       });
 
       ws.on("RoomClosed", () => {
-         console.log("requested to disconnect")
          ws.stop();
       });
 
