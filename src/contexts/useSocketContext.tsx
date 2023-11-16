@@ -95,6 +95,19 @@ export function SocketProvider(props: any) {
       setGameState(newGameState);
    }
 
+   const resetRoomState = () => {
+      setIsConnected(false);
+      setIsRoomFull(false);
+      setIsGameStarted(false);
+      setGameState(defaultGameState);
+      setRoomId("");
+      setPlayerId("");
+   }
+
+   const resetGameState = () => {
+      setGameState(defaultGameState);
+   }
+
    onMount(() => {
       const ws = new signalR.HubConnectionBuilder()
       .withUrl("http://192.168.2.16:5095/gameHub", {
@@ -108,25 +121,20 @@ export function SocketProvider(props: any) {
          setIsConnected(true);
          setRoomId(roomId);
          setPlayerId(playerId);
-         setMsg("Waitign for opponent");
-      });
-      ws.on("RoomNotCreated", () => {
-         setMsg("Failed to create room");
+         setMsg("");
       });
 
       ws.on("RoomJoined", (roomId: string, playerId: string) => {
          setIsConnected(true);
          setRoomId(roomId);
          setPlayerId(playerId);
-         setMsg("Joined room");
-      });
-      ws.on("RoomNotFound", () => {
-         setMsg("Failed to join room");
       });
 
-      ws.on("PlayerConnected", (playerId: string, isRoomFull: boolean) => {
-         setIsRoomFull(isRoomFull);
-         setMsg("Opponent joined");
+      ws.on("PlayerConnected", (isFull: boolean) => {
+         setIsRoomFull(isFull);
+      });
+      ws.on("PlayerDisconnected", (isFull: boolean) => {
+         setIsRoomFull(isFull);
       });
 
       ws.on("GameStarted", (gameStateJson: string) => {
@@ -156,22 +164,22 @@ export function SocketProvider(props: any) {
          setMsg(message);
       });
 
-      ws.on("RoomLeft", (playerId: string) => {
-         setIsRoomFull(false);
-         setIsGameStarted(false);
-         setGameState(defaultGameState);
-         setRoomId("");
-         setPlayerId("");
-         setMsg(`Player ${playerId} left`);
+      ws.on("RoomLeft", () => {
+         resetRoomState();
+      });
+
+      ws.on("RoomClosed", () => {
+         console.log("requested to disconnect")
+         ws.stop();
+      });
+
+      ws.on("Announcement", (msg: string) => {
+         setMsg(msg);
       });
 
       ws.onclose((err) => {
-         setIsConnected(false);
-         setIsRoomFull(false);
-         setIsGameStarted(false);
-         setGameState(defaultGameState);
-         setRoomId("");
-         setPlayerId("");
+         resetRoomState();
+         resetGameState();
          setMsg("Disconnected from server");
       });
    });

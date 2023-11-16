@@ -27,9 +27,8 @@ export default function Home() {
 
    const disconnect = () => {
       leaveServer().catch(e => console.log(e.message));
-      navigate("/home");
+      // navigate("/home");
    }
-   
 
    const copyRoomId = () => {
       navigator.clipboard.writeText(roomId());
